@@ -135,11 +135,41 @@ if uploaded_file:
             st.success("Excel Report Generated")
 
     # PDF
+    import os
+    import uuid
+
     with col2:
         if st.button("Generate PDF Report", key="pdf_btn"):
+
+            report_id = uuid.uuid4().hex[:8]   # ✅ ADD THIS
+
+            pdf_path = f"output/report_{report_id}.pdf"
+
             generate_pdf_report(df, status, f0_value, deviations, report_id)
             log_audit("PDF Report Generated", status)
-            st.success("PDF Report Generated")
+
+            st.success("PDF Generated Successfully")
+
+        if os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as f:
+                st.download_button(
+                    label="Download PDF",
+                    data=f,
+                    file_name=f"{report_id}.pdf",
+                    mime="application/pdf"
+                )
+        else:
+            st.error("PDF not found. Please generate again.")
+
+    # 📥 Download button
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                label="Download PDF",
+                data=f,
+                file_name=f"{report_id}.pdf",
+                mime="application/pdf"
+            )
+
 
     # Email
     with col3:

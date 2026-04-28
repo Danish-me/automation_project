@@ -1,5 +1,9 @@
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table
 from reportlab.lib.styles import getSampleStyleSheet
+import os
+
+os.makedirs("output", exist_ok=True)
+
 
 def generate_pdf_report(df, status, f0_value, deviations, report_id):
 
@@ -43,3 +47,4 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
 
     doc.build(content)
     file_path = f"output/report_{report_id}.pdf"
+    return file_path

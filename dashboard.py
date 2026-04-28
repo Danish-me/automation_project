@@ -37,7 +37,8 @@ def login(users):
 
     if not st.session_state.logged_in:
         st.title("🔐 Login")
-
+        
+        st.info("Demo Access → Username: demo_user | Password: demo123")
         u = st.text_input("Username", key="login_user")
         p = st.text_input("Password", type="password", key="login_pass")
 

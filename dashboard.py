@@ -141,15 +141,16 @@ if uploaded_file:
     with col2:
         if st.button("Generate PDF Report", key="pdf_btn"):
 
-            report_id = uuid.uuid4().hex[:8]   # ✅ ADD THIS
-
+            report_id = uuid.uuid4().hex[:8]
             pdf_path = f"output/report_{report_id}.pdf"
 
+            # Generate PDF
             generate_pdf_report(df, status, f0_value, deviations, report_id)
             log_audit("PDF Report Generated", status)
 
             st.success("PDF Generated Successfully")
 
+            # Download button (only after generation)
             if os.path.exists(pdf_path):
                 with open(pdf_path, "rb") as f:
                     st.download_button(
@@ -159,7 +160,7 @@ if uploaded_file:
                         mime="application/pdf"
                     )
             else:
-                st.error("PDF not found. Please generate again.")
+                st.error("PDF not found. Please try again.")
 
     # Email
     with col3:

@@ -161,16 +161,6 @@ if uploaded_file:
             else:
                 st.error("PDF not found. Please generate again.")
 
-    # 📥 Download button
-        with open(pdf_path, "rb") as f:
-            st.download_button(
-                label="Download PDF",
-                data=f,
-                file_name=f"{report_id}.pdf",
-                mime="application/pdf"
-            )
-
-
     # Email
     with col3:
         if st.button("Send Email Report", key="email_btn"):

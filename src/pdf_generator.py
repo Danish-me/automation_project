@@ -1,60 +1,52 @@
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table
-from reportlab.lib.styles import getSampleStyleSheet
+import matplotlib.pyplot as plt
 import os
 
+from src.data_processor import (
+    get_temperature_series,
+    process_datetime,
+    detect_phases
+)
 
-def generate_pdf_report(df, status, f0_value, deviations, report_id):
 
-    # ✅ Ensure output folder exists
+def plot_temperature(df):
+    """
+    Generate temperature graph with phase highlighting
+    + save image for PDF
+    """
+
+    # ✅ Prepare data
+    df = process_datetime(df)
+    df = get_temperature_series(df)
+    df = detect_phases(df)
+
+    # ✅ Create figure
+    plt.figure(figsize=(10, 5))
+
+    # 🔹 Main temperature line
+    plt.plot(df["Datetime"], df["Temp"], label="Temperature (°C)")
+
+    # 🔹 Highlight Sterilization Phase
+    steril_df = df[df["Phase"] == "Sterilization"]
+
+    if not steril_df.empty:
+        plt.fill_between(
+            steril_df["Datetime"],
+            steril_df["Temp"],
+            alpha=0.3,
+            label="Sterilization Phase"
+        )
+
+    # 🔹 Labels
+    plt.xlabel("Time")
+    plt.ylabel("Temperature (°C)")
+    plt.title("Autoclave Temperature Profile")
+
+    plt.legend()
+    plt.grid(True)
+
+    # ✅ Save graph for PDF
     os.makedirs("output", exist_ok=True)
-
-    # ✅ Dynamic file path (IMPORTANT FIX)
-    file_path = f"output/report_{report_id}.pdf"
-
-    doc = SimpleDocTemplate(file_path)
-    styles = getSampleStyleSheet()
-    content = []
-
-    # 🔹 Header
-    content.append(Paragraph("XYZ Pharma Pvt Ltd", styles["Title"]))
-    content.append(Spacer(1, 10))
-    content.append(Paragraph(f"Report ID: {report_id}", styles["Normal"]))
-
-    # 🔹 Summary
-    content.append(Paragraph(f"Batch Status: {status}", styles["Normal"]))
-    content.append(Paragraph(f"F0 Value: {round(f0_value, 2)}", styles["Normal"]))
-    content.append(Spacer(1, 10))
-
-    # 🔹 Deviations
-    content.append(Paragraph("Deviations:", styles["Heading2"]))
-    if deviations:
-        for d in deviations:
-            content.append(Paragraph(d, styles["Normal"]))
-    else:
-        content.append(Paragraph("No deviations", styles["Normal"]))
-
-    content.append(Spacer(1, 15))
-
-    # 🔹 Graph (safe handling)
-    content.append(Paragraph("Temperature Graph:", styles["Heading2"]))
-
     graph_path = "output/temperature_graph.png"
-    if os.path.exists(graph_path):
-        content.append(Image(graph_path, width=400, height=200))
-    else:
-        content.append(Paragraph("Graph not available", styles["Normal"]))
+    plt.savefig(graph_path, bbox_inches="tight")
 
-    content.append(Spacer(1, 15))
-
-    # 🔹 Raw Data (Top 10 rows)
-    content.append(Paragraph("Sample Raw Data:", styles["Heading2"]))
-
-    table_data = [df.columns.tolist()] + df.head(10).values.tolist()
-    table = Table(table_data)
-    content.append(table)
-
-    # 🔹 Build PDF
-    doc.build(content)
-
-    # ✅ RETURN correct path (IMPORTANT)
-    return file_path
+    return plt

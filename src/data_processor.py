@@ -1,87 +1,182 @@
 import pandas as pd
 
+# =========================
+# 🔹 TEMPERATURE HANDLING
+# =========================
+
+def get_temperature_columns(df):
+    """Auto-detect temperature columns (Channel-based or Temp-based)"""
+    return [col for col in df.columns if "channel" in col.lower() or "temp" in col.lower()]
+
+
+def get_temperature_series(df):
+    """Create single Temp column (worst-case probe = pharma best practice)"""
+    temp_cols = get_temperature_columns(df)
+
+    if not temp_cols:
+        raise ValueError("No temperature columns found in dataset")
+
+    df["Temp"] = df[temp_cols].min(axis=1)  # cold spot
+    return df
+
 
 # =========================
-# 🔹 CLEANING FUNCTION
+# 🔹 DATETIME HANDLING
 # =========================
-def clean_data(df):
-    df = df.copy()
 
-    # Normalize column names
-    df.columns = df.columns.str.strip().str.lower()
+def process_datetime(df):
+    """Flexible datetime handling (Date+Time / Time only / No time)"""
 
-    # Clean temperature
-    df["temperature"] = (
-        df["temperature"]
-        .astype(str)
-        .str.replace("°C", "", regex=False)
-        .str.strip()
-        .astype(float)
-    )
+    if "Date" in df.columns and "Time" in df.columns:
+        df["Datetime"] = pd.to_datetime(df["Date"] + " " + df["Time"])
 
-    # Clean pressure
-    df["pressure"] = (
-        df["pressure"]
-        .astype(str)
-        .str.replace("KPa", "", regex=False)
-        .str.strip()
-        .astype(float)
-    )
+    elif "Time" in df.columns:
+        df["Datetime"] = pd.to_datetime(df["Time"])
+
+    else:
+        # fallback (1-minute interval)
+        df["Datetime"] = pd.date_range(
+            start="2025-01-01", periods=len(df), freq="1min"
+        )
 
     return df
 
 
 # =========================
-# 🔹 PROCESS DATA
+# 🔹 PHASE DETECTION
 # =========================
+
+def detect_phases(df):
+    """Classify cycle phases"""
+
+    df["Phase"] = "Preheating"
+
+    # Sterilization (Hold)
+    df.loc[(df["Temp"] >= 121) & (df["Temp"] <= 135), "Phase"] = "Sterilization"
+
+    # Cooling
+    df.loc[df["Temp"] < 100, "Phase"] = "Cooling"
+
+    return df
+
+
+# =========================
+# 🔹 DATA CLEANING
+# =========================
+
+def clean_data(df):
+    """Clean temperature & pressure values (if present)"""
+
+    df = df.copy()
+    df.columns = df.columns.str.strip().str.lower()
+
+    if "temperature" in df.columns:
+        df["temperature"] = (
+            df["temperature"]
+            .astype(str)
+            .str.replace("°C", "", regex=False)
+            .str.strip()
+            .astype(float)
+        )
+
+    if "pressure" in df.columns:
+        df["pressure"] = (
+            df["pressure"]
+            .astype(str)
+            .str.replace("kpa", "", regex=False)
+            .str.strip()
+            .astype(float)
+        )
+
+    return df
+
+
+# =========================
+# 🔹 BASIC SUMMARY
+# =========================
+
 def process_data(df):
+    """Return summary stats"""
+
     df = clean_data(df)
 
-    return {
-        "temp_min": df["temperature"].min(),
-        "temp_max": df["temperature"].max(),
-        "temp_avg": df["temperature"].mean(),
-        "press_min": df["pressure"].min(),
-        "press_max": df["pressure"].max(),
-        "press_avg": df["pressure"].mean(),
-    }
+    summary = {}
+
+    if "temperature" in df.columns:
+        summary.update({
+            "temp_min": df["temperature"].min(),
+            "temp_max": df["temperature"].max(),
+            "temp_avg": df["temperature"].mean(),
+        })
+
+    if "pressure" in df.columns:
+        summary.update({
+            "press_min": df["pressure"].min(),
+            "press_max": df["pressure"].max(),
+            "press_avg": df["pressure"].mean(),
+        })
+
+    return summary
 
 
 # =========================
-# 🔹 F0 CALCULATION
+# 🔹 F0 CALCULATION (UNIVERSAL)
 # =========================
+
 def calculate_f0(df):
-    df = clean_data(df)
+    """Universal F0 calculation (multi-channel + flexible time)"""
 
-    F0 = 0
-    for T in df["temperature"]:
-        contribution = 10 ** ((T - 121) / 10)
-        F0 += contribution  # assuming 1 min interval
+    df = process_datetime(df)
+    df = get_temperature_series(df)
 
-    return F0
+    z = 10
+    T_ref = 121.1
+
+    # Lethality
+    df["F0_increment"] = 10 ** ((df["Temp"] - T_ref) / z)
+
+    # Time delta (minutes)
+    df["dt"] = df["Datetime"].diff().dt.total_seconds().fillna(60) / 60
+
+    df["F0"] = df["F0_increment"] * df["dt"]
+
+    return df["F0"].sum()
 
 
 # =========================
 # 🔹 VALIDATION (TEMP + PRESS)
 # =========================
+
 def validate_data(df):
+    """Check temp and pressure limits"""
+
     df = clean_data(df)
 
-    temp_fail = df[df["temperature"] < 121]
-    press_fail = df[df["pressure"] != 115]
+    deviations = []
 
-    if temp_fail.empty and press_fail.empty:
-        return "PASS"
-    else:
-        return (
-            f"FAIL  | Temp Issues: {len(temp_fail)} "
-            f"| Pressure Issues: {len(press_fail)}"
+    if "temperature" in df.columns:
+        temp_fail = df[df["temperature"] < 121]
+        deviations.extend(
+            [f"Temp low at {row.get('time','N/A')} ({row['temperature']}°C)"
+             for _, row in temp_fail.iterrows()]
         )
+
+    if "pressure" in df.columns:
+        press_fail = df[df["pressure"] != 115]
+        deviations.extend(
+            [f"Pressure issue at {row.get('time','N/A')} ({row['pressure']} kPa)"
+             for _, row in press_fail.iterrows()]
+        )
+
+    status = "PASS" if not deviations else "FAIL"
+
+    return status, deviations
 
 
 # =========================
 # 🔹 F0 VALIDATION
 # =========================
+
 def validate_f0(f0_value):
     return "PASS" if f0_value >= 12 else "FAIL"
 
@@ -89,23 +184,10 @@ def validate_f0(f0_value):
 # =========================
 # 🔹 FULL BATCH ANALYSIS
 # =========================
+
 def analyze_batch(df):
-    df = clean_data(df)
+    """Final batch evaluation"""
 
-    deviations = []
-
-    for _, row in df.iterrows():
-
-        if row["temperature"] < 121:
-            deviations.append(
-                f"Temp low at {row['time']} ({row['temperature']}°C)"
-            )
-
-        if row["pressure"] != 115:
-            deviations.append(
-                f"Pressure issue at {row['time']} ({row['pressure']} KPa)"
-            )
-
-    status = "PASS" if not deviations else "FAIL"
+    status, deviations = validate_data(df)
 
     return status, deviations

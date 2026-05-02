@@ -66,7 +66,7 @@ login(users)
 col1, col2 = st.columns([8,1])
 
 with col1:
-    st.title("🔥 Autoclave Validation Dashboard")
+    st.title("Autoclave Validation Dashboard")
 
 with col2:
     if st.button("Logout"):
@@ -120,12 +120,12 @@ if uploaded_file:
 
 
     # ================= SUMMARY =================
-    st.subheader("📊 Summary")
+    st.subheader("Summary")
     st.json(results)
 
 
     # ================= GRAPH =================
-    st.subheader("📈 Temperature Profile")
+    st.subheader("Temperature Profile")
 
     fig = plot_temperature(df)
     st.pyplot(fig)
@@ -141,7 +141,7 @@ if uploaded_file:
 
 
     # ================= ACTIONS =================
-    st.subheader("📤 Actions")
+    st.subheader("Actions")
 
     col1, col2, col3 = st.columns(3)
 

@@ -16,13 +16,13 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     file_path = f"output/report_{report_id}.pdf"
 
     # ✅ Create document
+    content.append(Paragraph("Autoclave Validation Report", styles["Title"]))
     doc = SimpleDocTemplate(
     file_path,
     pagesize=landscape(letter),
     leftMargin=20,
     rightMargin=20
     )
-    
     styles = getSampleStyleSheet()
     content = []
 
@@ -90,6 +90,9 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     content.append(Spacer(1, 5))
 
     try:
+        content.append(table)
+    except Exception as e:
+        content.append(Paragraph(f"Table error: {str(e)}", styles["Normal"]))
         from reportlab.lib import colors
         from reportlab.platypus import Table, TableStyle
         from reportlab.lib.units import inch

@@ -4,7 +4,7 @@ def read_excel(file_path):
     df = pd.read_excel(file_path, header=0)
 
     # Clean columns
-    df.columns = df.columns.str.strip()
+    df.columns = df.columns.str.strip().str.lower()
 
     # ✅ Handle Date + Time
     if "Date" in df.columns and "Time" in df.columns:

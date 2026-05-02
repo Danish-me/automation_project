@@ -179,7 +179,7 @@ if uploaded_file:
                     )
             else:
                 st.error("PDF not found")
-
+            
 
     # -------- EMAIL --------
     with col3:
@@ -196,3 +196,4 @@ if uploaded_file:
             log_audit("Email Sent", status)
 
             st.success("Email Sent Successfully")
+            # df = process_datetime(df)

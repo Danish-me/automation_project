@@ -1,43 +1,43 @@
 import matplotlib.pyplot as plt
+import os
+
+from src.data_processor import (
+    get_temperature_series,
+    process_datetime,
+    detect_phases
+)
 
 def plot_temperature(df):
 
-    # 🔹 Clean temperature
-    df["temperature"] = (
-        df["temperature"]
-        .astype(str)
-        .str.replace("°C", "")
-        .str.strip()
-        .astype(float)
-    )
+    df = process_datetime(df)
+    df = get_temperature_series(df)
+    df = detect_phases(df)
 
-    # 🔹 Time column (string for display)
-    time = df["time"].astype(str)
+    fig, ax = plt.subplots(figsize=(10, 5))
 
-    # 🔹 Temperature values
-    temp = df["temperature"]
+    # Main line
+    ax.plot(df["Datetime"], df["Temp"], label="Temperature (°C)")
 
-    # 🔹 Create plot
-    plt.figure(figsize=(10, 5))
+    # Sterilization highlight
+    steril_df = df[df["Phase"] == "Sterilization"]
 
-    # Line plot
-    plt.plot(time, temp, marker='o')
+    if not steril_df.empty:
+        ax.fill_between(
+            steril_df["Datetime"],
+            steril_df["Temp"],
+            alpha=0.3,
+            label="Sterilization Phase"
+        )
 
-    # 🔥 Highlight threshold line (IMPORTANT for validation)
-    plt.axhline(y=121, linestyle='--')
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Temperature (°C)")
+    ax.set_title("Autoclave Temperature Profile")
+    ax.legend()
+    ax.grid(True)
 
-    # Labels
-    plt.title("Temperature vs Time")
-    plt.xlabel("Time")
-    plt.ylabel("Temperature (°C)")
+    # Save
+    os.makedirs("output", exist_ok=True)
+    graph_path = "output/temperature_graph.png"
+    fig.savefig(graph_path, bbox_inches="tight")
 
-    # Rotate time labels (fix your earlier issue)
-    plt.xticks(rotation=45)
-
-    # Layout fix
-    plt.tight_layout()
-
-    # Save graph
-    plt.savefig("output/temperature_graph.png")
-
-    return plt
+    return fig

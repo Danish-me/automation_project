@@ -208,4 +208,3 @@ def analyze_batch(df):
     status, deviations = validate_data(df)
 
     return status, deviations
-print(df[temp_cols].head())

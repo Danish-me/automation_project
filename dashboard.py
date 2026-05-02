@@ -102,11 +102,17 @@ if uploaded_file:
 
     with col1:
         st.subheader("Batch Status")
-        st.success(status) if status == "PASS" else st.error(status)
+        if status == "PASS":
+            st.success(status)
+        else:
+            st.error(status)
 
     with col2:
         st.subheader("F0 Value")
-        st.success(round(f0_value,2)) if f0_value >= 12 else st.error(round(f0_value,2))
+        if f0_value >= 12:
+            st.success(round(f0_value, 2))
+        else:
+            st.error(round(f0_value, 2))
 
     with col3:
         st.subheader("Deviations")

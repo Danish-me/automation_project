@@ -163,6 +163,7 @@ if uploaded_file:
             pdf_path = generate_pdf_report(
                 df, status, f0_value, deviations, report_id
             )
+            print("Generated path:", pdf_path)
             log_audit("PDF Generated", status)
 
             if os.path.exists(pdf_path):

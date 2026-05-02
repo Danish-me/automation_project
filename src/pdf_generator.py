@@ -84,8 +84,8 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
 
     try:
         # 🔹 Select channels dynamically
-        cols = [col for col in df.columns if "channel" in col.lower()]
-
+        # cols = [col for col in df.columns if "channel" in col.lower()]
+        cols = []
         if "date" in df.columns:
                 cols.append("date")
 

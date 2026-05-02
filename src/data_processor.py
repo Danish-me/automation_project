@@ -10,16 +10,34 @@ def get_temperature_columns(df):
 
 
 def get_temperature_series(df):
-    """Create single Temp column (worst-case probe = pharma best practice)"""
-    temp_cols = get_temperature_columns(df)
+
+    temp_cols = [col for col in df.columns if "Channel" in col or "Temp" in col]
 
     if not temp_cols:
-        raise ValueError("No temperature columns found in dataset")
+        raise ValueError("No temperature columns found")
 
-    df["Temp"] = df[temp_cols].min(axis=1)  # cold spot
+    # ✅ CLEAN ALL TEMPERATURE COLUMNS
+    for col in temp_cols:
+        df[col] = (
+            df[col]
+            .astype(str)
+            .str.replace("°C", "", regex=False)
+            .str.replace(",", "", regex=False)
+            .str.strip()
+        )
+
+        # Convert to numeric (VERY IMPORTANT)
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # ✅ Drop rows where all temps are NaN
+    df = df.dropna(subset=temp_cols, how="all")
+
+    # ✅ Cold spot calculation
+    df["Temp"] = df[temp_cols].min(axis=1)
+
     return df
-
-
+print(df[temp_cols].head())
+    
 # =========================
 # 🔹 DATETIME HANDLING
 # =========================
@@ -191,3 +209,4 @@ def analyze_batch(df):
     status, deviations = validate_data(df)
 
     return status, deviations
+print(df[temp_cols].head())

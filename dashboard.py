@@ -5,13 +5,13 @@ import json
 import uuid
 from datetime import datetime
 
-from data_reader import read_excel
-from data_processor import process_data, analyze_batch, calculate_f0, get_temperature_columns
-from graph_generator import plot_temperature
-from report_generator import save_excel_report
-from email_sender import send_email_report
-from pdf_generator import generate_pdf_report
-from audit_logger import log_audit
+from src.data_reader import read_excel
+from src.data_processor import process_data, analyze_batch, calculate_f0, get_temperature_columns
+from src.graph_generator import plot_temperature
+from src.report_generator import save_excel_report
+from src.email_sender import send_email_report
+from src.pdf_generator import generate_pdf_report
+from src.audit_logger import log_audit
 
 
 # ================= CONFIG =================

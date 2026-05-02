@@ -22,8 +22,15 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     leftMargin=20,
     rightMargin=20
     )
+    
     styles = getSampleStyleSheet()
     content = []
+
+    # 👉 (yahan tumhara content + table code rahega)
+
+    doc.build(content)
+
+    return file_path   # ✅ VERY IMPORTANT
 
     # =========================
     # 🔹 HEADER
@@ -87,29 +94,37 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
         from reportlab.platypus import Table, TableStyle
         from reportlab.lib.units import inch
 
-        # 🔹 Select useful columns
+        # 🔹 Select only useful columns (channels + time)
         cols = [col for col in df.columns if "channel" in col.lower()]
         if "time" in df.columns:
             cols.insert(0, "time")
 
+        # 🔹 Prepare table data
         table_data = [cols] + df[cols].head(10).values.tolist()
 
-        # 🔹 Column widths
-        col_widths = [0.8*inch] + [0.5*inch]*(len(cols)-1)
+        # 🔹 Column widths (Time wide, others compact)
+        col_widths = [0.8 * inch] + [0.5 * inch] * (len(cols) - 1)
 
+        # 🔹 Create table
         table = Table(table_data, colWidths=col_widths)
 
+        # 🔹 Styling
         table.setStyle(TableStyle([
             ("GRID", (0, 0), (-1, -1), 0.3, colors.grey),
             ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
             ("FONTSIZE", (0, 0), (-1, -1), 6),
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ]))
 
+        # 🔹 Add to PDF
         content.append(table)
 
     except Exception as e:
-        content.append(Paragraph(f"Table error: {str(e)}", styles["Normal"]))
+        content.append(
+            Paragraph(f"Table error: {str(e)}", styles["Normal"])
+        )
+
         # =========================
         # 🔹 BUILD PDF
         # =========================

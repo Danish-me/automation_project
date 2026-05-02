@@ -1,11 +1,15 @@
+import sys
 import streamlit as st
 import pandas as pd
 import os
 import json
 import uuid
 from datetime import datetime
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
 
-from data_reader import read_excel
+from src.data_reader import read_excel
 from data_processor import process_data, analyze_batch, calculate_f0, get_temperature_columns
 from graph_generator import plot_temperature
 from report_generator import save_excel_report

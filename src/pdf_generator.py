@@ -1,7 +1,7 @@
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table
 from reportlab.lib.styles import getSampleStyleSheet
 import os
-
+from reportlab.lib.pagesizes import letter, landscape
 
 def generate_pdf_report(df, status, f0_value, deviations, report_id):
     """
@@ -16,7 +16,12 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     file_path = f"output/report_{report_id}.pdf"
 
     # ✅ Create document
-    doc = SimpleDocTemplate(file_path)
+    doc = SimpleDocTemplate(
+    file_path,
+    pagesize=landscape(letter),
+    leftMargin=20,
+    rightMargin=20
+    )
     styles = getSampleStyleSheet()
     content = []
 

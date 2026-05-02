@@ -78,11 +78,35 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     content.append(Spacer(1, 5))
 
     try:
+    # 🔹 Prepare table data
         table_data = [df.columns.tolist()] + df.head(10).values.tolist()
-        table = Table(table_data)
+
+        from reportlab.lib import colors
+        from reportlab.platypus import Table, TableStyle
+
+        # 🔹 Auto column width (fit to page)
+        col_width = 500 / len(table_data[0])
+
+        table = Table(
+            table_data,
+            colWidths=[col_width] * len(table_data[0])
+        )
+
+        # 🔹 Table styling (professional look)
+        table.setStyle(TableStyle([
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ]))
+
+        # 🔹 Add to PDF content
         content.append(table)
-    except Exception:
-        content.append(Paragraph("Unable to render table data", styles["Normal"]))
+
+    except Exception as e:
+            content.append(
+                Paragraph(f"Unable to render table data: {str(e)}", styles["Normal"])
+            )
 
     # =========================
     # 🔹 BUILD PDF

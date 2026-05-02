@@ -158,16 +158,20 @@ if uploaded_file:
     with col2:
         if st.button("Generate PDF Report"):
 
-            pdf_path = generate_pdf_report(df, status, f0_value, deviations, report_id)
+            report_id = uuid.uuid4().hex[:8]
 
+            pdf_path = generate_pdf_report(
+                df, status, f0_value, deviations, report_id
+            )
             log_audit("PDF Generated", status)
 
             if os.path.exists(pdf_path):
-                st.success("PDF Generated")
+                st.success("PDF Generated Successfully")
 
+            if pdf_path and os.path.exists(pdf_path):
                 with open(pdf_path, "rb") as f:
                     st.download_button(
-                        "⬇ Download PDF",
+                        label="Download PDF",
                         data=f,
                         file_name=f"{report_id}.pdf",
                         mime="application/pdf"

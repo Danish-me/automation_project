@@ -83,40 +83,37 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     content.append(Spacer(1, 5))
 
     try:
-    # 🔹 Prepare table data
-        table_data = [df.columns.tolist()] + df.head(10).values.tolist()
-
         from reportlab.lib import colors
         from reportlab.platypus import Table, TableStyle
+        from reportlab.lib.units import inch
 
-        # 🔹 Auto column width (fit to page)
-        col_width = 500 / len(table_data[0])
+        # 🔹 Select useful columns
+        cols = [col for col in df.columns if "channel" in col.lower()]
+        if "time" in df.columns:
+            cols.insert(0, "time")
 
-        table = Table(
-            table_data,
-            colWidths=[col_width] * len(table_data[0])
-        )
+        table_data = [cols] + df[cols].head(10).values.tolist()
 
-        # 🔹 Table styling (professional look)
+        # 🔹 Column widths
+        col_widths = [0.8*inch] + [0.5*inch]*(len(cols)-1)
+
+        table = Table(table_data, colWidths=col_widths)
+
         table.setStyle(TableStyle([
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("GRID", (0, 0), (-1, -1), 0.3, colors.grey),
             ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 6),
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ]))
 
-        # 🔹 Add to PDF content
         content.append(table)
 
     except Exception as e:
-            content.append(
-                Paragraph(f"Unable to render table data: {str(e)}", styles["Normal"])
-            )
-
-    # =========================
-    # 🔹 BUILD PDF
-    # =========================
-    doc.build(content)
+        content.append(Paragraph(f"Table error: {str(e)}", styles["Normal"]))
+        # =========================
+        # 🔹 BUILD PDF
+        # =========================
+        doc.build(content)
 
     # ✅ RETURN FILE PATH (VERY IMPORTANT)
     return file_path

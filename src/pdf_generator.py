@@ -5,6 +5,9 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 import os
 
+print("PDF generation started")
+print("Rows:", len(df))
+print("Columns:", df.columns)
 
 def generate_pdf_report(df, status, f0_value, deviations, report_id):
 
@@ -105,6 +108,8 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
 
     except Exception as e:
         content.append(Paragraph(f"Table error: {str(e)}", styles["Normal"]))
+
+    print("Content length:", len(content))
 
     # =========================
     # 🔹 BUILD PDF

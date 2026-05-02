@@ -40,4 +40,6 @@ def plot_temperature(df):
     graph_path = "output/temperature_graph.png"
     fig.savefig(graph_path, bbox_inches="tight")
 
-    return fig
+    # return fig
+    plt.savefig(graph_path, bbox_inches="tight")
+    plt.close()   # 🔥 ADD THIS

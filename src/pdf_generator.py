@@ -86,13 +86,31 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
         # 🔹 Select channels dynamically
         cols = [col for col in df.columns if "channel" in col.lower()]
 
-        if "time" in df.columns:
-            cols.insert(0, "time")
+        if "date" in df.columns:
+                cols.append("date")
 
+        if "time" in df.columns:
+            cols.append("time")
+
+        if "datetime" in df.columns:
+            cols.append("datetime")
+
+        # 🔹 Add all temperature channels
+        channel_cols = [col for col in df.columns if "channel" in col.lower()]
+        cols.extend(channel_cols)
+
+        # 🔹 Prepare table
         table_data = [cols] + df[cols].head(10).values.tolist()
 
-        # 🔹 Column width fix
-        col_widths = [0.8 * inch] + [0.5 * inch] * (len(cols) - 1)
+        # 🔹 Column width handling
+        from reportlab.lib.units import inch
+
+        col_widths = []
+        for col in cols:
+            if col in ["date", "time", "datetime"]:
+                col_widths.append(1.2 * inch)   # wider
+            else:
+                col_widths.append(0.5 * inch)   # compact
 
         table = Table(table_data, colWidths=col_widths)
 

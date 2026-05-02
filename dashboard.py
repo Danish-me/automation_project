@@ -36,7 +36,6 @@ def load_users():
 
 users = load_users()
 
-
 # ================= LOGIN =================
 def login(users):
 

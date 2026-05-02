@@ -36,8 +36,7 @@ def get_temperature_series(df):
     df["Temp"] = df[temp_cols].min(axis=1)
 
     return df
-print(df[temp_cols].head())
-    
+
 # =========================
 # 🔹 DATETIME HANDLING
 # =========================

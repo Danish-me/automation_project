@@ -53,7 +53,7 @@ def login(users):
         if st.button("Login", key="login_btn"):
             if users.get(u) == p:
                 st.session_state.logged_in = True
-                st.session_state.user = u
+                st.session_state.users = u
                 st.rerun()
             else:
                 st.error("Invalid credentials")
@@ -62,7 +62,6 @@ def login(users):
 
 
 login(users)
-
 
 # ================= HEADER =================
 col1, col2 = st.columns([8,1])

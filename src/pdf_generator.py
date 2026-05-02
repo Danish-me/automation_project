@@ -1,36 +1,29 @@
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
-import os
 from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+import os
+
 
 def generate_pdf_report(df, status, f0_value, deviations, report_id):
-    """
-    Generate Autoclave Validation PDF Report
-    Compatible with Streamlit + Cloud Deployment
-    """
 
     # ✅ Ensure output folder exists
     os.makedirs("output", exist_ok=True)
 
-    # ✅ Dynamic file path
+    # ✅ File path
     file_path = f"output/report_{report_id}.pdf"
 
-    # ✅ Create document
-    content.append(Paragraph("Autoclave Validation Report", styles["Title"]))
+    # ✅ Document setup
     doc = SimpleDocTemplate(
-    file_path,
-    pagesize=landscape(letter),
-    leftMargin=20,
-    rightMargin=20
+        file_path,
+        pagesize=landscape(letter),
+        leftMargin=20,
+        rightMargin=20
     )
+
     styles = getSampleStyleSheet()
     content = []
-
-    # 👉 (yahan tumhara content + table code rahega)
-
-    doc.build(content)
-
-    return file_path   # ✅ VERY IMPORTANT
 
     # =========================
     # 🔹 HEADER
@@ -38,13 +31,13 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     content.append(Paragraph("Autoclave Validation Report", styles["Title"]))
     content.append(Spacer(1, 10))
 
-    content.append(Paragraph(f"<b>Report ID:</b> {report_id}", styles["Normal"]))
+    content.append(Paragraph(f"Report ID: {report_id}", styles["Normal"]))
     content.append(Spacer(1, 10))
 
     # =========================
     # 🔹 SUMMARY
     # =========================
-    content.append(Paragraph("<b>Summary</b>", styles["Heading2"]))
+    content.append(Paragraph("Summary", styles["Heading2"]))
     content.append(Spacer(1, 5))
 
     content.append(Paragraph(f"Batch Status: {status}", styles["Normal"]))
@@ -54,7 +47,7 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     # =========================
     # 🔹 DEVIATIONS
     # =========================
-    content.append(Paragraph("<b>Deviations</b>", styles["Heading2"]))
+    content.append(Paragraph("Deviations", styles["Heading2"]))
     content.append(Spacer(1, 5))
 
     if deviations:
@@ -66,52 +59,40 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
     content.append(Spacer(1, 15))
 
     # =========================
-    # 🔹 GRAPH SECTION
+    # 🔹 GRAPH
     # =========================
-    content.append(Paragraph("<b>Temperature Profile</b>", styles["Heading2"]))
+    content.append(Paragraph("Temperature Profile", styles["Heading2"]))
     content.append(Spacer(1, 5))
 
     graph_path = "output/temperature_graph.png"
 
     if os.path.exists(graph_path):
-        try:
-            content.append(Image(graph_path, width=450, height=250))
-        except Exception:
-            content.append(Paragraph("Graph could not be loaded", styles["Normal"]))
+        content.append(Image(graph_path, width=450, height=250))
     else:
         content.append(Paragraph("Graph not available", styles["Normal"]))
 
     content.append(Spacer(1, 15))
 
     # =========================
-    # 🔹 RAW DATA SAMPLE
+    # 🔹 TABLE (FIXED)
     # =========================
-    content.append(Paragraph("<b>Sample Data (Top 10 Rows)</b>", styles["Heading2"]))
+    content.append(Paragraph("Sample Data (Top 10 Rows)", styles["Heading2"]))
     content.append(Spacer(1, 5))
 
     try:
-        content.append(table)
-    except Exception as e:
-        content.append(Paragraph(f"Table error: {str(e)}", styles["Normal"]))
-        from reportlab.lib import colors
-        from reportlab.platypus import Table, TableStyle
-        from reportlab.lib.units import inch
-
-        # 🔹 Select only useful columns (channels + time)
+        # 🔹 Select channels dynamically
         cols = [col for col in df.columns if "channel" in col.lower()]
+
         if "time" in df.columns:
             cols.insert(0, "time")
 
-        # 🔹 Prepare table data
         table_data = [cols] + df[cols].head(10).values.tolist()
 
-        # 🔹 Column widths (Time wide, others compact)
+        # 🔹 Column width fix
         col_widths = [0.8 * inch] + [0.5 * inch] * (len(cols) - 1)
 
-        # 🔹 Create table
         table = Table(table_data, colWidths=col_widths)
 
-        # 🔹 Styling
         table.setStyle(TableStyle([
             ("GRID", (0, 0), (-1, -1), 0.3, colors.grey),
             ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
@@ -120,18 +101,14 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id):
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ]))
 
-        # 🔹 Add to PDF
         content.append(table)
 
     except Exception as e:
-        content.append(
-            Paragraph(f"Table error: {str(e)}", styles["Normal"])
-        )
+        content.append(Paragraph(f"Table error: {str(e)}", styles["Normal"]))
 
-        # =========================
-        # 🔹 BUILD PDF
-        # =========================
-        doc.build(content)
+    # =========================
+    # 🔹 BUILD PDF
+    # =========================
+    doc.build(content)
 
-    # ✅ RETURN FILE PATH (VERY IMPORTANT)
     return file_path

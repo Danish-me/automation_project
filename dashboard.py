@@ -8,13 +8,16 @@ from datetime import datetime
 
 # ================= PATH SETUP =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, "src"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(BASE_DIR, "src")
+
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 # ================= IMPORT MODULES =================
 from data_reader import read_excel
 from data_processor import analyze_batch, get_temperature_columns
-from graph_generator import plot_temperature
+from src.graph_generator import plot_temperature
 from report_generator import save_excel_report
 from email_sender import send_email_report
 from pdf_generator import generate_pdf_report

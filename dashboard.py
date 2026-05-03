@@ -5,62 +5,56 @@ import os
 import json
 import uuid
 from datetime import datetime
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
+
+# ================= PATH SETUP =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, "src"))
 
+# ================= IMPORT MODULES =================
 from src.data_reader import read_excel
-from src.data_processor import process_data, analyze_batch, calculate_f0, get_temperature_columns
+from src.data_processor import analyze_batch, get_temperature_columns
 from src.graph_generator import plot_temperature
 from src.report_generator import save_excel_report
 from src.email_sender import send_email_report
 from src.pdf_generator import generate_pdf_report
 from src.audit_logger import log_audit
 
-
 # ================= CONFIG =================
 st.set_page_config(page_title="Autoclave Dashboard", layout="wide")
 
-
-# ================= USERS =================
+# ================= LOAD USERS =================
 def load_users():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(BASE_DIR, "users.json")
-
     if not os.path.exists(file_path):
         return {}
-
     with open(file_path, "r") as f:
         return json.load(f)
-
 
 users = load_users()
 
 # ================= LOGIN =================
-def login(users):
-
+def login():
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
 
     if not st.session_state.logged_in:
         st.title("🔐 Login")
-        st.info("Demo → Username: demo_user | Password: demo123")
 
-        u = st.text_input("Username", key="user")
-        p = st.text_input("Password", type="password", key="pass")
+        u = st.text_input("Username")
+        p = st.text_input("Password", type="password")
 
-        if st.button("Login", key="login_btn"):
+        if st.button("Login"):
             if users.get(u) == p:
                 st.session_state.logged_in = True
-                st.session_state.users = u
+                st.session_state.user = u
                 st.rerun()
             else:
                 st.error("Invalid credentials")
 
         st.stop()
 
-
-login(users)
+login()
 
 # ================= HEADER =================
 col1, col2 = st.columns([8,1])
@@ -73,10 +67,11 @@ with col2:
         st.session_state.logged_in = False
         st.rerun()
 
+# ================= MODE =================
+mode = st.selectbox("Select Mode", ["validation", "routine"])
 
 # ================= FILE UPLOAD =================
 uploaded_file = st.file_uploader("Upload Autoclave Excel File", type=["xlsx"])
-
 
 if uploaded_file:
 
@@ -87,15 +82,19 @@ if uploaded_file:
     with open(temp_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-    # ================= PROCESS =================
+    # ================= READ DATA =================
     df = read_excel(temp_path)
+    df.columns = df.columns.str.lower()
 
-    results = process_data(df)
-    status, deviations = analyze_batch(df)
-    f0_value = calculate_f0(df)
+    # ================= PROCESS DATA =================
+    result = analyze_batch(df)
 
-    report_id = f"RPT-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+    f0_value = result["f0_value"]
+    f0_status = result["f0_status"]
+    status = result["final_status"]
+    deviations = result["deviations"]
 
+    report_id = f"RPT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     # ================= KPI =================
     col1, col2, col3 = st.columns(3)
@@ -109,20 +108,24 @@ if uploaded_file:
 
     with col2:
         st.subheader("F0 Value")
-        if f0_value >= 12:
-            st.success(round(f0_value, 2))
+        if f0_status == "PASS":
+            st.success(f0_value)
         else:
-            st.error(round(f0_value, 2))
+            st.error(f0_value)
 
     with col3:
         st.subheader("Deviations")
         st.warning(len(deviations))
 
-
     # ================= SUMMARY =================
     st.subheader("Summary")
-    st.json(results)
 
+    st.json({
+        "F0 Value": f0_value,
+        "F0 Status": f0_status,
+        "Final Status": status,
+        "Total Deviations": len(deviations)
+    })
 
     # ================= GRAPH =================
     st.subheader("Temperature Profile")
@@ -132,27 +135,23 @@ if uploaded_file:
 
     st.info(f"Detected {len(get_temperature_columns(df))} temperature channels")
 
-
     # ================= DEVIATIONS =================
     if deviations:
         st.subheader("⚠ Deviations")
         for d in deviations:
             st.write(f"- {d}")
 
-
     # ================= ACTIONS =================
     st.subheader("Actions")
 
     col1, col2, col3 = st.columns(3)
 
-
     # -------- Excel --------
     with col1:
         if st.button("Generate Excel Report"):
-            save_excel_report(df, results, status, deviations, f0_value)
+            save_excel_report(df, result, status, deviations, f0_value)
             log_audit("Excel Generated", status)
             st.success("Excel Report Generated")
-
 
     # -------- PDF --------
     with col2:
@@ -161,15 +160,19 @@ if uploaded_file:
             report_id = uuid.uuid4().hex[:8]
 
             pdf_path = generate_pdf_report(
-                df, status, f0_value, deviations, report_id
+                df=df,
+                status=status,
+                f0_value=f0_value,
+                deviations=deviations,
+                report_id=report_id,
+                mode=mode
             )
-            print("Generated path:", pdf_path)
+
             log_audit("PDF Generated", status)
 
             if os.path.exists(pdf_path):
                 st.success("PDF Generated Successfully")
 
-            if pdf_path and os.path.exists(pdf_path):
                 with open(pdf_path, "rb") as f:
                     st.download_button(
                         label="Download PDF",
@@ -179,7 +182,6 @@ if uploaded_file:
                     )
             else:
                 st.error("PDF not found")
-            
 
     # -------- EMAIL --------
     with col3:
@@ -196,4 +198,3 @@ if uploaded_file:
             log_audit("Email Sent", status)
 
             st.success("Email Sent Successfully")
-            

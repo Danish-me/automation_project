@@ -196,4 +196,4 @@ if uploaded_file:
             log_audit("Email Sent", status)
 
             st.success("Email Sent Successfully")
-            # df = process_datetime(df)
+            

@@ -1,11 +1,15 @@
-import sys
 import streamlit as st
 import pandas as pd
-import os
 import json
 import uuid
 from datetime import datetime
-sys.path.insert(0, os.path.abspath("src"))
+
+import sys
+import os
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 # ================= PATH SETUP =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

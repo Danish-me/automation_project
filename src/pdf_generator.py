@@ -47,10 +47,12 @@ def generate_pdf_report(df, status, f0_value, deviations, report_id, mode="valid
     # 🔹 SUMMARY
     # =========================
     content.append(Paragraph("Summary", styles["Heading2"]))
+    f0_status = "PASS" if f0_value >= 12 else "FAIL"
     content.append(Spacer(1, 5))
 
     content.append(Paragraph(f"Batch Status: {status}", styles["Normal"]))
     content.append(Paragraph(f"F0 Value: {round(f0_value, 2)}", styles["Normal"]))
+    content.append(Paragraph(f"F0 Status: {f0_status}", styles["Normal"]))
     content.append(Spacer(1, 10))
 
     # =========================

@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 
-from data_processor import (
+from src.data_processor import (
     get_temperature_series,
     process_datetime,
     detect_phases

@@ -40,3 +40,4 @@ def plot_temperature(df):
     plt.close()
 
     return fig
+print("GRAPH GENERATOR NEW VERSION 🚀")

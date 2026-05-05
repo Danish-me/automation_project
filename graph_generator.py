@@ -3,7 +3,6 @@ import os
 
 from data_processor import (
     get_temperature_series,
-    plot_temperature,
     process_datetime,
     detect_phases
 )
@@ -16,16 +15,14 @@ def plot_temperature(df):
 
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    # Main line
-    ax.plot(df["Datetime"], df["Temp"], label="Temperature (°C)")
+    ax.plot(df["datetime"], df["temp"], label="Temperature (°C)")
 
-    # Sterilization highlight
-    steril_df = df[df["Phase"] == "Sterilization"]
+    steril_df = df[df["phase"] == "Sterilization"]
 
     if not steril_df.empty:
         ax.fill_between(
-            steril_df["Datetime"],
-            steril_df["Temp"],
+            steril_df["datetime"],
+            steril_df["temp"],
             alpha=0.3,
             label="Sterilization Phase"
         )
@@ -36,11 +33,10 @@ def plot_temperature(df):
     ax.legend()
     ax.grid(True)
 
-    # Save
     os.makedirs("output", exist_ok=True)
     graph_path = "output/temperature_graph.png"
-    fig.savefig(graph_path, bbox_inches="tight")
 
-    # return fig
     plt.savefig(graph_path, bbox_inches="tight")
-    plt.close()   # 🔥 ADD THIS
+    plt.close()
+
+    return fig

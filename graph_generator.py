@@ -3,6 +3,7 @@ import os
 
 from data_processor import (
     get_temperature_series,
+    plot_temperature,
     process_datetime,
     detect_phases
 )
